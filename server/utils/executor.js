@@ -498,8 +498,9 @@ function executeJAL(operands, processor) {
   // Save return address (PC + 1)
   processor.setRegister(rd, processor.pc + 1);
   // Jump to PC + offset
-  processor.pc += offset - 1;
+  processor.pc += offset;
 }
+
 
 function executeJALR(operands, processor) {
   const rd = parseRegister(operands[0]);

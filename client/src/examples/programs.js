@@ -62,18 +62,4 @@ ADDI x1, x1, 1
 BLT x1, x2, loop
 HLT`,
 
-  "Factorial": `# Factorial of 5
-ADDI x1, x0, 5
-ADDI x2, x0, 1
-loop:
-BEQ x1, x0, done
-ADDI x3, x1, 0
-ADDI x1, x1, -1
-mul_loop:
-BEQ x3, x0, loop
-ADD x2, x2, x2
-ADDI x3, x3, -1
-JAL x0, mul_loop
-done:
-HLT`
 };

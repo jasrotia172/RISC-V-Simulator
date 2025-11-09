@@ -5,18 +5,16 @@ const Memory = require('./utils/Memory');
 const { parseInstructions } = require('./utils/parser');
 const { executeInstruction } = require('./utils/executor');
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors()); // Enable CORS for frontend communication
-app.use(express.json()); // Parse JSON request bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Initialize processor and memory (in-memory state, no database)
 let processor = new Processor();
-let memory = new Memory(1024); // 1024 bytes of memory
+let memory = new Memory(1024); // 1024 bytes
+let instructions = []; // Store parsed instructions from the loaded code
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -30,28 +28,17 @@ app.get('/api/health', (req, res) => {
 app.post('/api/execute', (req, res) => {
   try {
     const { code } = req.body;
-
     if (!code || code.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        error: 'No code provided'
-      });
+      return res.status(400).json({ success: false, error: 'No code provided' });
     }
-
-    // Reset PC and halted flag, but KEEP registers and memory
     processor.pc = 0;
     processor.halted = false;
-
     const instructions = parseInstructions(code);
 
     if (instructions.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'No valid instructions found'
-      });
+      return res.status(400).json({ success: false, error: 'No valid instructions found' });
     }
 
-    // Execute all instructions
     let executionCount = 0;
     const maxExecutions = 10000;
 
@@ -63,16 +50,17 @@ app.post('/api/execute', (req, res) => {
         });
       }
 
-      const instruction = instructions[processor.pc];
+      const prevPC = processor.pc;
+      const instruction = instructions[prevPC];
       executeInstruction(instruction, processor, memory);
-      
-      if (!processor.halted) {
+
+      // Only increment PC if the instruction didn't change it
+      if (!processor.halted && processor.pc === prevPC) {
         processor.pc++;
       }
 
       executionCount++;
     }
-
     res.json({
       success: true,
       registers: processor.registers,
@@ -81,25 +69,66 @@ app.post('/api/execute', (req, res) => {
       halted: processor.halted,
       executionCount: executionCount
     });
-
   } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message
-    });
+    res.status(400).json({ success: false, error: error.message });
   }
 });
 
 
+// Step-by-step execution
+app.post('/api/step', (req, res) => {
+  try {
+    const code = req.body?.code;  // safer than destructuring
 
+    // If code is provided, re-load instructions and reset the processor/memory state
+    if (code && code.trim() !== '') {
+      processor = new Processor();
+      memory = new Memory(1024);
+      instructions = parseInstructions(code);
+      processor.pc = 0;
+      processor.halted = false;
+    }
+
+    if (!instructions || instructions.length === 0) {
+      return res.status(400).json({ success: false, error: 'No program loaded, please load code first' });
+    }
+
+    if (processor.pc >= instructions.length || processor.halted) {
+      return res.json({
+        success: true,
+        registers: processor.registers,
+        pc: processor.pc,
+        memory: memory.getMemorySnapshot(),
+        halted: processor.halted,
+        message: 'Execution completed or already halted'
+      });
+    }
+
+    // Execute one instruction
+    const instruction = instructions[processor.pc];
+    executeInstruction(instruction, processor, memory);
+    if (!processor.halted) {
+      processor.pc++;
+    }
+    res.json({
+      success: true,
+      registers: processor.registers,
+      pc: processor.pc,
+      memory: memory.getMemorySnapshot(),
+      halted: processor.halted
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
 
 
 // Reset the simulator
 app.post('/api/reset', (req, res) => {
   try {
-    processor.reset();
-    memory.reset();
-
+    processor = new Processor();
+    memory = new Memory(1024);
+    instructions = [];
     res.json({
       success: true,
       registers: processor.registers,
@@ -108,15 +137,23 @@ app.post('/api/reset', (req, res) => {
       halted: processor.halted,
       message: 'Simulator reset successfully'
     });
-
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
-// Home/Root route - API information
+
+// Get current state without executing
+app.get('/api/state', (req, res) => {
+  res.json({
+    success: true,
+    registers: processor.registers,
+    pc: processor.pc,
+    memory: memory.getMemorySnapshot(),
+    halted: processor.halted
+  });
+});
+
+// Root route - API info
 app.get('/', (req, res) => {
   res.json({
     name: 'RISC-V 32-bit Simulator API',
@@ -144,91 +181,24 @@ app.get('/', (req, res) => {
   });
 });
 
-// Step-by-step execution (optional - for future enhancement)
-app.post('/api/step', (req, res) => {
-  try {
-    const { code } = req.body;
-
-    if (!code || code.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        error: 'No code provided'
-      });
-    }
-
-    const instructions = parseInstructions(code);
-
-    if (processor.pc >= instructions.length || processor.halted) {
-      return res.json({
-        success: true,
-        registers: processor.registers,
-        pc: processor.pc,
-        memory: memory.getMemorySnapshot(),
-        halted: processor.halted,
-        message: 'Execution completed or already halted'
-      });
-    }
-
-    // Execute one instruction
-    const instruction = instructions[processor.pc];
-    executeInstruction(instruction, processor, memory);
-    
-    if (!processor.halted) {
-      processor.pc++;
-    }
-
-    res.json({
-      success: true,
-      registers: processor.registers,
-      pc: processor.pc,
-      memory: memory.getMemorySnapshot(),
-      halted: processor.halted
-    });
-
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Get current state without executing
-app.get('/api/state', (req, res) => {
-  res.json({
-    success: true,
-    registers: processor.registers,
-    pc: processor.pc,
-    memory: memory.getMemorySnapshot(),
-    halted: processor.halted
-  });
-});
-
-// 404 handler for unknown routes
+// 404 for unknown routes
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Route not found'
-  });
+  res.status(404).json({ success: false, error: 'Route not found' });
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error',
-    message: err.message
-  });
+  res.status(500).json({ success: false, error: 'Internal server error', message: err.message });
 });
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`╔════════════════════════════════════════╗`);
-  console.log(`║  RISC-V Simulator Server Running      ║`);
-  console.log(`║  Port: ${PORT}                           ║`);
-  console.log(`║  URL: http://localhost:${PORT}          ║`);
-  console.log(`╚════════════════════════════════════════╝`);
+  console.log(`╔══════════════════════════════════╗`);
+  console.log(`║  RISC-V Simulator Server Running ║`);
+  console.log(`║  Port: ${PORT}                   ║`);
+  console.log(`║  URL: http://localhost:${PORT}   ║`);
+  console.log(`╚══════════════════════════════════╝`);
 });
 
 module.exports = app;

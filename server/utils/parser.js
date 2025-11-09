@@ -7,19 +7,19 @@ function parseInstructions(code) {
   // First pass: Find all labels and their positions
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i].trim();
-    
+
     // Remove comments
     line = line.split('#')[0].split('//')[0].trim();
-    
+
     if (!line) continue;
-    
+
     // Check if line is a label (ends with :)
     if (line.endsWith(':')) {
       const labelName = line.substring(0, line.length - 1).trim();
       labels[labelName] = instructionIndex;
       continue;
     }
-    
+
     // Not a label, so it's an instruction
     instructionIndex++;
   }
@@ -28,7 +28,7 @@ function parseInstructions(code) {
   instructionIndex = 0;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
-    
+
     // Skip empty lines and comments
     if (!line || line.startsWith('#') || line.startsWith('//')) {
       continue;
@@ -56,25 +56,25 @@ function parseInstructions(code) {
 function parseLine(line, labels = {}, currentIndex = 0) {
   // Remove comments from the line
   line = line.split('#')[0].split('//')[0].trim();
-  
+
   if (!line) return null;
 
   // Split instruction and operands
   const parts = line.split(/[\s,]+/).filter(part => part);
-  
+
   if (parts.length === 0) return null;
 
   const opcode = parts[0].toUpperCase();
   let operands = parts.slice(1);
 
-  // For branch instructions, resolve label to offset
-  if (['BEQ', 'BNE', 'BLT', 'BGE', 'BLTU', 'BGEU'].includes(opcode)) {
+  // For branch, JAL and JALR instructions, resolve label to offset
+  if (['BEQ', 'BNE', 'BLT', 'BGE', 'BLTU', 'BGEU', 'JAL', 'JALR'].includes(opcode)) {
     const lastOperand = operands[operands.length - 1];
-    
+
     // Check if last operand is a label (not a number)
     if (isNaN(parseInt(lastOperand)) && labels.hasOwnProperty(lastOperand)) {
       // Calculate offset from current instruction to label
-      // Subtract 1 because PC will auto-increment after branch
+      // Subtract 1 because PC will auto-increment after branch/jump
       const offset = labels[lastOperand] - currentIndex - 1;
       operands = [...operands.slice(0, -1), offset.toString()];
     }
@@ -92,10 +92,10 @@ function parseRegister(reg) {
     const num = parseInt(reg.substring(1));
     if (num >= 0 && num <= 31) return num;
   }
-  
+
   const num = parseInt(reg);
   if (num >= 0 && num <= 31) return num;
-  
+
   throw new Error(`Invalid register: ${reg}`);
 }
 
@@ -115,14 +115,14 @@ function parseMemoryOperand(operand) {
   // Parse format: offset(base) or just offset
   // Example: 4(x2) or 100
   const match = operand.match(/^(-?\d+)\(([xX]\d+)\)$/);
-  
+
   if (match) {
     return {
       offset: parseImmediate(match[1]),
       base: parseRegister(match[2])
     };
   }
-  
+
   // If no parentheses, treat as offset with base x0
   return {
     offset: parseImmediate(operand),

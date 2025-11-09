@@ -23,6 +23,19 @@
   font-family: 'Courier New', monospace;
 }
 
+/* Add this for Step button */
+.btn-step {
+  background-color: #3a9e23;
+  color: white;
+  flex: 1;
+}
+
+.btn-step:hover {
+  background-color: #4bc233;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(58, 158, 35, 0.2);
+}
+
 .btn-execute {
   background-color: #0e639c;
   color: white;

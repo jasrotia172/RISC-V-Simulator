@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-
 const API_BASE_URL = '/api';
-
 
 // Execute all instructions
 export const executeCode = async (code) => {
@@ -14,7 +12,6 @@ export const executeCode = async (code) => {
   }
 };
 
-
 // Reset the simulator
 export const resetSimulator = async () => {
   try {
@@ -25,11 +22,15 @@ export const resetSimulator = async () => {
   }
 };
 
-
-// Execute single step
-export const executeStep = async (code) => {
+// Execute a single step (send code only on the first step after code change or reset)
+export const stepSimulator = async (code) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/step`, { code });
+    let response;
+    if (code && code.trim() !== '') {
+      response = await axios.post('/api/step', { code }); // Send code as object
+    } else {
+      response = await axios.post('/api/step', {}); // Send empty object, not undefined
+    }
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.error || 'Step execution failed');
@@ -37,7 +38,7 @@ export const executeStep = async (code) => {
 };
 
 
-// Get current state
+// Get the current state (registers, memory, PC, halted)
 export const getState = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/state`);

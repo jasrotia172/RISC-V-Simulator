@@ -2,12 +2,15 @@ import React from 'react';
 import './ControlPanel.css';
 
 
-function ControlPanel({ onExecute, onReset, error }) {
+function ControlPanel({ onExecute, onReset, onStep, error }) {
   return (
     <div className="control-panel">
       <div className="button-group">
         <button className="btn btn-execute" onClick={onExecute}>
           ▶️ Execute
+        </button>
+        <button className="btn btn-step" onClick={onStep}>
+          ⏸️ Step
         </button>
         <button className="btn btn-reset" onClick={onReset}>
           🔄 Reset
@@ -22,6 +25,7 @@ function ControlPanel({ onExecute, onReset, error }) {
     </div>
   );
 }
+
 
 
 export default ControlPanel;
