@@ -1,0 +1,103 @@
+.register-display {
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #3e3e42;
+  display: flex;
+  flex-direction: column;
+  max-height: 60%;
+  overflow-y: auto;
+}
+
+.register-header {
+  background-color: #2d2d30;
+  padding: 10px 15px;
+  border-bottom: 1px solid #3e3e42;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.register-title {
+  color: #cccccc;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.halted-badge {
+  background-color: #d16969;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.pc-display {
+  background-color: #264f78;
+  padding: 12px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.pc-label {
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.pc-value {
+  color: #4ec9b0;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.register-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  background-color: #3e3e42;
+  padding: 1px;
+}
+
+.register-item {
+  background-color: #252526;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.register-item:hover {
+  background-color: #2a2d2e;
+}
+
+.register-active {
+  background-color: #1a3a1a;
+}
+
+.register-active:hover {
+  background-color: #1f4a1f;
+}
+
+.register-name {
+  color: #9cdcfe;
+  font-weight: bold;
+  font-size: 13px;
+  min-width: 30px;
+}
+
+.register-value {
+  color: #b5cea8;
+  font-size: 12px;
+  text-align: right;
+}
+
+.register-active .register-value {
+  color: #4ec9b0;
+  font-weight: bold;
+}

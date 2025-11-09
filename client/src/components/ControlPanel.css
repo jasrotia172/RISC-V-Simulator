@@ -1,0 +1,84 @@
+.control-panel {
+  background-color: #252526;
+  border-top: 1px solid #3e3e42;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Courier New', monospace;
+}
+
+.btn-execute {
+  background-color: #0e639c;
+  color: white;
+  flex: 1;
+}
+
+.btn-execute:hover {
+  background-color: #1177bb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(14, 99, 156, 0.3);
+}
+
+.btn-reset {
+  background-color: #5a5a5a;
+  color: white;
+  flex: 1;
+}
+
+.btn-reset:hover {
+  background-color: #707070;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(90, 90, 90, 0.3);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.error-message {
+  background-color: #5a1d1d;
+  border: 1px solid #be1100;
+  border-radius: 5px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-icon {
+  font-size: 18px;
+}
+
+.error-text {
+  color: #f48771;
+  font-size: 13px;
+  flex: 1;
+}

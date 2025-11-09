@@ -1,0 +1,104 @@
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: #1e1e1e;
+}
+
+.editor-header {
+  background-color: #2d2d30;
+  padding: 10px 15px;
+  border-bottom: 1px solid #3e3e42;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editor-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.editor-right {
+  display: flex;
+  align-items: center;
+}
+
+.editor-title {
+  color: #cccccc;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.editor-hint {
+  color: #858585;
+  font-size: 12px;
+}
+
+.code-editor {
+  flex: 1;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 15px;
+  border: none;
+  outline: none;
+  resize: none;
+  tab-size: 4;
+}
+
+.code-editor::placeholder {
+  color: #6a6a6a;
+  font-style: italic;
+}
+
+.code-editor::-webkit-scrollbar {
+  width: 10px;
+}
+
+.code-editor::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.code-editor::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+}
+
+.code-editor::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
+/* New styles for example selector */
+.example-selector {
+  padding: 6px 12px;
+  border: 1px solid #3e3e42;
+  border-radius: 4px;
+  background-color: #3c3c3c;
+  color: #cccccc;
+  font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.example-selector:hover {
+  background-color: #505050;
+  border-color: #007acc;
+}
+
+.example-selector:focus {
+  outline: none;
+  border-color: #007acc;
+  box-shadow: 0 0 0 1px #007acc;
+}
+
+.example-selector option {
+  background-color: #3c3c3c;
+  color: #cccccc;
+  padding: 8px;
+}
