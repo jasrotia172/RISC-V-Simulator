@@ -1,6 +1,4 @@
 
-
-```
 # 🖥️ RISC-V 32-bit Simulator
 
 An interactive web-based RISC-V assembly language simulator with a modern UI, supporting 37 base instructions from the RV32I instruction set. Built with React (frontend) and Node.js/Express (backend).
@@ -168,4 +166,3 @@ riscv-simulator/
 Developed by Ansh Jasrotia and Anant Gautam 
 NIT Srinagar - B.Tech Information Technology
 
-```
