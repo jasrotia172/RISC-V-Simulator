@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Editor from './components/Editor';
 import RegisterDisplay from './components/RegisterDisplay';
 import MemoryDisplay from './components/MemoryDisplay';
 import ControlPanel from './components/ControlPanel';
-import { executeCode, resetSimulator, stepSimulator } from './services/api';
+import { executeCode, resetSimulator, stepSimulator, getState } from './services/api';
+
 
 function App() {
   const [code, setCode] = useState('');
@@ -14,7 +15,25 @@ function App() {
   const [error, setError] = useState('');
   const [halted, setHalted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [stepInitialized, setStepInitialized] = useState(false); // Track if step mode has loaded code
+  const [stepInitialized, setStepInitialized] = useState(false);
+
+  // Fetch initial state on component mount
+  useEffect(() => {
+    const fetchInitialState = async () => {
+      try {
+        const result = await getState();
+        setRegisters(result.registers);
+        setPc(result.pc);
+        setMemory(result.memory);
+        setHalted(result.halted);
+      } catch (err) {
+        console.error('Failed to fetch initial state:', err);
+      }
+    };
+
+    fetchInitialState();
+  }, []); // Empty dependency array means this runs once on mount
+
 
   const handleExecute = async () => {
     try {
@@ -25,13 +44,14 @@ function App() {
       setPc(result.pc);
       setMemory(result.memory);
       setHalted(result.halted);
-      setStepInitialized(false); // reset stepping
+      setStepInitialized(false);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleReset = async () => {
     try {
@@ -43,7 +63,7 @@ function App() {
       setMemory(result.memory);
       setHalted(result.halted);
       setCode('');
-      setStepInitialized(false); // reset stepping
+      setStepInitialized(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -51,7 +71,7 @@ function App() {
     }
   };
 
-  // Step handler with initialization logic
+
   const handleStep = async () => {
     try {
       setLoading(true);
@@ -74,6 +94,7 @@ function App() {
     }
   };
 
+
   return (
     <div className="App">
       <header className="app-header">
@@ -81,8 +102,8 @@ function App() {
         <p className="app-subtitle">Interactive Assembly Language Simulator</p>
       </header>
 
+
       <div className="main-container">
-        {/* Left Panel: Editor */}
         <div className="left-panel">
           <Editor code={code} setCode={setCode} />
           <ControlPanel 
@@ -94,7 +115,7 @@ function App() {
           />
         </div>
 
-        {/* Right Panel: Registers and Memory */}
+
         <div className="right-panel">
           <RegisterDisplay 
             registers={registers} 
@@ -107,5 +128,6 @@ function App() {
     </div>
   );
 }
+
 
 export default App;

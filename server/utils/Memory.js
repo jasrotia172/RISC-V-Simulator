@@ -1,5 +1,5 @@
 class Memory {
-  constructor(size = 1024) {
+  constructor(size = 256) {
     this.data = new Array(size).fill(0);
     this.size = size;
   }
@@ -73,25 +73,23 @@ readWord(address) {
   }
 
   // Get all non-zero memory locations for display
-  getMemorySnapshot() {
+  // Get memory snapshot - show all memory addresses
+getMemorySnapshot() {
   const snapshot = [];
   
-  // Show all non-zero bytes individually
+  // Show all 1024 bytes
   for (let i = 0; i < this.size; i++) {
     const value = this.readByte(i);
-    // Show all bytes, even if zero, when surrounded by non-zero bytes
-    // Or just show non-zero bytes
-    if (value !== 0) {
-      snapshot.push({ 
-        address: i,
-        value: value,
-        hex: '0x' + value.toString(16).padStart(2, '0').toUpperCase()
-      });
-    }
+    snapshot.push({ 
+      address: i,
+      value: value,
+      hex: '0x' + value.toString(16).padStart(2, '0').toUpperCase()
+    });
   }
   
   return snapshot;
 }
+
 
 
 

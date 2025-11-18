@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 let processor = new Processor();
-let memory = new Memory(1024); // 1024 bytes
+let memory = new Memory(256); // 256 bytes
 let instructions = []; // Store parsed instructions from the loaded code
 
 // Health check endpoint
@@ -105,11 +105,15 @@ app.post('/api/step', (req, res) => {
     }
 
     // Execute one instruction
-    const instruction = instructions[processor.pc];
+    const prevPC = processor.pc;
+    const instruction = instructions[prevPC];
     executeInstruction(instruction, processor, memory);
-    if (!processor.halted) {
+    
+    // Only increment PC if instruction didn't change it
+    if (!processor.halted && processor.pc === prevPC) {
       processor.pc++;
     }
+    
     res.json({
       success: true,
       registers: processor.registers,
@@ -120,6 +124,7 @@ app.post('/api/step', (req, res) => {
   } catch (error) {
     res.status(400).json({ success: false, error: error.message });
   }
+
 });
 
 
@@ -127,7 +132,7 @@ app.post('/api/step', (req, res) => {
 app.post('/api/reset', (req, res) => {
   try {
     processor = new Processor();
-    memory = new Memory(1024);
+    memory = new Memory(256);
     instructions = [];
     res.json({
       success: true,

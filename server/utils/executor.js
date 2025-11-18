@@ -422,84 +422,97 @@ function executeAUIPC(operands, processor) {
   processor.setRegister(rd, result);
 }
 
-// Branch Instructions: BEQ rs1, rs2, offset
+// Branch Instructions: BEQ rs1, rs2, label
 function executeBEQ(operands, processor) {
   const rs1 = parseRegister(operands[0]);
   const rs2 = parseRegister(operands[1]);
-  const offset = parseImmediate(operands[2]);
+  const targetAddress = parseImmediate(operands[2]); // Absolute instruction line number
   
   if (processor.getRegister(rs1) === processor.getRegister(rs2)) {
-    processor.pc += offset; // Remove the -1
+    processor.pc = targetAddress; // Set PC directly to target
   }
+  // If false, PC will be auto-incremented by main loop
 }
 
 function executeBNE(operands, processor) {
   const rs1 = parseRegister(operands[0]);
   const rs2 = parseRegister(operands[1]);
-  const offset = parseImmediate(operands[2]);
+  const targetAddress = parseImmediate(operands[2]);
   
   if (processor.getRegister(rs1) !== processor.getRegister(rs2)) {
-    processor.pc += offset; // Remove the -1
+    processor.pc = targetAddress;
   }
 }
 
 function executeBLT(operands, processor) {
   const rs1 = parseRegister(operands[0]);
   const rs2 = parseRegister(operands[1]);
-  const offset = parseImmediate(operands[2]);
+  const targetAddress = parseImmediate(operands[2]);
   
-  if (processor.getRegister(rs1) < processor.getRegister(rs2)) {
-    processor.pc += offset; // Remove the -1
+  // Signed comparison
+  const val1 = processor.getRegister(rs1) | 0;
+  const val2 = processor.getRegister(rs2) | 0;
+  
+  if (val1 < val2) {
+    processor.pc = targetAddress;
   }
 }
 
 function executeBGE(operands, processor) {
   const rs1 = parseRegister(operands[0]);
   const rs2 = parseRegister(operands[1]);
-  const offset = parseImmediate(operands[2]);
+  const targetAddress = parseImmediate(operands[2]);
   
-  if (processor.getRegister(rs1) >= processor.getRegister(rs2)) {
-    processor.pc += offset; // Remove the -1
+  // Signed comparison
+  const val1 = processor.getRegister(rs1) | 0;
+  const val2 = processor.getRegister(rs2) | 0;
+  
+  if (val1 >= val2) {
+    processor.pc = targetAddress;
   }
 }
 
 function executeBLTU(operands, processor) {
   const rs1 = parseRegister(operands[0]);
   const rs2 = parseRegister(operands[1]);
-  const offset = parseImmediate(operands[2]);
+  const targetAddress = parseImmediate(operands[2]);
   
+  // Unsigned comparison
   const val1 = processor.getRegister(rs1) >>> 0;
   const val2 = processor.getRegister(rs2) >>> 0;
   
   if (val1 < val2) {
-    processor.pc += offset; // Remove the -1
+    processor.pc = targetAddress;
   }
 }
 
 function executeBGEU(operands, processor) {
   const rs1 = parseRegister(operands[0]);
   const rs2 = parseRegister(operands[1]);
-  const offset = parseImmediate(operands[2]);
+  const targetAddress = parseImmediate(operands[2]);
   
+  // Unsigned comparison
   const val1 = processor.getRegister(rs1) >>> 0;
   const val2 = processor.getRegister(rs2) >>> 0;
   
   if (val1 >= val2) {
-    processor.pc += offset; // Remove the -1
+    processor.pc = targetAddress;
   }
 }
+
 
 
 // Jump Instructions
 function executeJAL(operands, processor) {
   const rd = parseRegister(operands[0]);
-  const offset = parseImmediate(operands[1]);
+  const targetAddress = parseImmediate(operands[1]); // Absolute instruction line
   
-  // Save return address (PC + 1)
+  // Save return address (next instruction)
   processor.setRegister(rd, processor.pc + 1);
-  // Jump to PC + offset
-  processor.pc += offset;
+  // Jump to target address
+  processor.pc = targetAddress;
 }
+
 
 
 function executeJALR(operands, processor) {
@@ -510,9 +523,10 @@ function executeJALR(operands, processor) {
   // Save return address
   const returnAddr = processor.pc + 1;
   // Jump to (rs1 + offset)
-  processor.pc = (processor.getRegister(rs1) + offset) - 1;
+  processor.pc = processor.getRegister(rs1) + offset;
   processor.setRegister(rd, returnAddr);
 }
+
 
 module.exports = {
   executeInstruction

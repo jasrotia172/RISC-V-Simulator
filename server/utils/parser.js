@@ -67,18 +67,25 @@ function parseLine(line, labels = {}, currentIndex = 0) {
   const opcode = parts[0].toUpperCase();
   let operands = parts.slice(1);
 
-  // For branch, JAL and JALR instructions, resolve label to offset
-  if (['BEQ', 'BNE', 'BLT', 'BGE', 'BLTU', 'BGEU', 'JAL', 'JALR'].includes(opcode)) {
-    const lastOperand = operands[operands.length - 1];
+  // For branch, JAL and JALR instructions, resolve label to address
+if (['BEQ', 'BNE', 'BLT', 'BGE', 'BLTU', 'BGEU', 'JAL'].includes(opcode)) {
+  const lastOperand = operands[operands.length - 1];
 
-    // Check if last operand is a label (not a number)
-    if (isNaN(parseInt(lastOperand)) && labels.hasOwnProperty(lastOperand)) {
-      // Calculate offset from current instruction to label
-      // Subtract 1 because PC will auto-increment after branch/jump
-      const offset = labels[lastOperand] - currentIndex - 1;
-      operands = [...operands.slice(0, -1), offset.toString()];
-    }
+  // Check if last operand is a label (not a number)
+  if (isNaN(parseInt(lastOperand)) && labels.hasOwnProperty(lastOperand)) {
+    // Pass the absolute instruction address of the label
+    const targetAddress = labels[lastOperand];
+    operands = [...operands.slice(0, -1), targetAddress.toString()];
   }
+}
+
+// JALR is different - it uses offset from register, not label typically
+if (opcode === 'JALR') {
+  // JALR format: JALR rd, rs1, offset
+  // Usually offset is just a number, not a label
+  // Keep as-is
+}
+
 
   return {
     opcode,

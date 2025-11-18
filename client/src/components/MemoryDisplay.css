@@ -56,24 +56,44 @@
 
 .memory-table-header {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 80px 1fr);
   background-color: #37373d;
-  padding: 10px 15px;
+  padding: 8px 12px;
   font-weight: bold;
   color: #cccccc;
   border-bottom: 2px solid #3e3e42;
   position: sticky;
   top: 40px;
   z-index: 9;
-  font-size: 13px;
+  font-size: 12px;
+  gap: 0;
+}
+
+.memory-table-header span {
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.memory-table-header span:nth-child(4n+1) {
+  border-right: 1px solid #555;
+}
+
+.memory-table-header span:nth-child(4n+2) {
+  border-right: 2px solid #3e3e42;
+}
+
+.memory-table-header span:nth-child(4n+3) {
+  border-right: 1px solid #555;
 }
 
 .memory-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 10px 15px;
+  grid-template-columns: repeat(4, 80px 1fr);
+  padding: 6px 12px;
   border-bottom: 1px solid #2d2d30;
   transition: background-color 0.2s;
+  gap: 0;
+  align-items: center;
 }
 
 .memory-row:hover {
@@ -82,12 +102,36 @@
 
 .memory-address {
   color: #ce9178;
-  font-size: 12px;
+  font-size: 11px;
+  text-align: center;
+  padding: 4px 8px;
+  border-right: 1px solid #3e3e42;
 }
 
 .memory-value {
   color: #4ec9b0;
-  font-size: 12px;
-  text-align: right;
+  font-size: 11px;
+  text-align: center;
   font-weight: bold;
+  padding: 4px 8px;
+  border-right: 2px solid #4e4e52;
+}
+
+.memory-value:nth-child(8n) {
+  border-right: none;
+}
+
+
+/* Highlight non-zero memory locations (like registers) */
+.memory-active {
+  background-color: rgba(76, 175, 80, 0.3);
+}
+
+.memory-address.memory-active {
+  background-color: rgba(76, 175, 80, 0.2);
+}
+
+.memory-value.memory-active {
+  background-color: rgba(76, 175, 80, 0.3);
+  color: #6eff6e;
 }
