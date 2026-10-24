@@ -505,12 +505,12 @@ function executeBGEU(operands, processor) {
 // Jump Instructions
 function executeJAL(operands, processor) {
   const rd = parseRegister(operands[0]);
-  const targetAddress = parseImmediate(operands[1]); // Absolute instruction line
+  const offset = parseImmediate(operands[1]); // Absolute instruction line
   
   // Save return address (next instruction)
   processor.setRegister(rd, processor.pc + 1);
   // Jump to target address
-  processor.pc = targetAddress;
+  processor.pc += offset;
 }
 
 
