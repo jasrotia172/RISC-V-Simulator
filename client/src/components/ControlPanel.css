@@ -95,3 +95,16 @@
   font-size: 13px;
   flex: 1;
 }
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.control-panel { flex-shrink: 0; }
+.error-text { overflow-wrap: anywhere; }
+
+@media (max-width: 600px) {
+  .btn { padding: 10px 8px; }
+}

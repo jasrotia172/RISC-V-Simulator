@@ -1,16 +1,16 @@
 import React from 'react';
 import './RegisterDisplay.css';
 
-function RegisterDisplay({ registers, pc, halted }) {
+function RegisterDisplay({ registers, pc, halted, completed }) {
   return (
     <div className="register-display">
       <div className="register-header">
         <span className="register-title">📊 Registers</span>
-        {halted && <span className="halted-badge">HALTED</span>}
+        {(halted || completed) && <span className="halted-badge">{halted ? 'HALTED' : 'COMPLETED'}</span>}
       </div>
       
       <div className="pc-display">
-        <span className="pc-label">PC (Program Counter):</span>
+        <span className="pc-label">PC (instruction index):</span>
         <span className="pc-value">{pc}</span>
       </div>
 

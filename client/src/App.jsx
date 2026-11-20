@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 import Editor from './components/Editor';
 import RegisterDisplay from './components/RegisterDisplay';
@@ -6,94 +6,48 @@ import MemoryDisplay from './components/MemoryDisplay';
 import ControlPanel from './components/ControlPanel';
 import { executeCode, resetSimulator, stepSimulator, getState } from './services/api';
 
+const initialState = { registers: Array(32).fill(0), pc: 0, memory: [], halted: false, completed: false };
 
 function App() {
   const [code, setCode] = useState('');
-  const [registers, setRegisters] = useState(Array(32).fill(0));
-  const [pc, setPc] = useState(0);
-  const [memory, setMemory] = useState([]);
+  const [state, setState] = useState(initialState);
   const [error, setError] = useState('');
-  const [halted, setHalted] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [stepInitialized, setStepInitialized] = useState(false);
 
-  // Fetch initial state on component mount
   useEffect(() => {
-    const fetchInitialState = async () => {
-      try {
-        const result = await getState();
-        setRegisters(result.registers);
-        setPc(result.pc);
-        setMemory(result.memory);
-        setHalted(result.halted);
-      } catch (err) {
-        console.error('Failed to fetch initial state:', err);
-      }
-    };
+    let active = true;
+    getState()
+      .then(result => { if (active) setState(result); })
+      .catch(err => { if (active) setError(err.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
-    fetchInitialState();
-  }, []); // Empty dependency array means this runs once on mount
+  const handleCodeChange = (value) => {
+    setCode(value);
+    setStepInitialized(false);
+    setError('');
+  };
 
-
-  const handleExecute = async () => {
+  const performAction = async (action) => {
+    if (loading) return;
+    setLoading(true);
+    setError('');
     try {
-      setLoading(true);
-      setError('');
-      const result = await executeCode(code);
-      setRegisters(result.registers);
-      setPc(result.pc);
-      setMemory(result.memory);
-      setHalted(result.halted);
-      setStepInitialized(false);
+      const result = await (action === 'reset' ? resetSimulator()
+        : action === 'execute' ? executeCode(code)
+        : stepSimulator(stepInitialized ? undefined : code));
+      setState(result);
+      setStepInitialized(action !== 'reset');
     } catch (err) {
       setError(err.message);
+      if (err.state) setState(err.state);
+      if (typeof err.programLoaded === 'boolean') setStepInitialized(err.programLoaded);
     } finally {
       setLoading(false);
     }
   };
-
-
-  const handleReset = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const result = await resetSimulator();
-      setRegisters(result.registers);
-      setPc(result.pc);
-      setMemory(result.memory);
-      setHalted(result.halted);
-      setCode('');
-      setStepInitialized(false);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const handleStep = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      let result;
-      if (!stepInitialized) {
-        result = await stepSimulator(code);
-        setStepInitialized(true);
-      } else {
-        result = await stepSimulator();
-      }
-      setRegisters(result.registers);
-      setPc(result.pc);
-      setMemory(result.memory);
-      setHalted(result.halted);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
 
   return (
     <div className="App">
@@ -101,33 +55,26 @@ function App() {
         <h1>🖥️ RISC-V 32-bit Simulator</h1>
         <p className="app-subtitle">Interactive Assembly Language Simulator</p>
       </header>
-
-
       <div className="main-container">
         <div className="left-panel">
-          <Editor code={code} setCode={setCode} />
-          <ControlPanel 
-            onExecute={handleExecute} 
-            onReset={handleReset}
-            onStep={handleStep}
+          <Editor code={code} setCode={handleCodeChange} disabled={loading} />
+          <ControlPanel
+            onExecute={() => performAction('execute')}
+            onReset={() => performAction('reset')}
+            onStep={() => performAction('step')}
             error={error}
             loading={loading}
+            hasCode={Boolean(code.trim())}
+            completed={stepInitialized && state.completed}
           />
         </div>
-
-
         <div className="right-panel">
-          <RegisterDisplay 
-            registers={registers} 
-            pc={pc} 
-            halted={halted} 
-          />
-          <MemoryDisplay memory={memory} />
+          <RegisterDisplay registers={state.registers} pc={state.pc} halted={state.halted} completed={state.completed} />
+          <MemoryDisplay memory={state.memory} />
         </div>
       </div>
     </div>
   );
 }
-
 
 export default App;

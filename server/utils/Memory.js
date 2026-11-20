@@ -4,19 +4,21 @@ class Memory {
     this.size = size;
   }
 
+  checkRange(address, width = 1) {
+    if (!Number.isInteger(address) || address < 0 || address + width > this.size) {
+      throw new Error(`Memory access out of bounds: ${address} (${width} bytes)`);
+    }
+  }
+
   // Read single byte (8 bits)
   readByte(address) {
-    if (address < 0 || address >= this.size) {
-      throw new Error(`Memory access out of bounds: ${address}`);
-    }
+    this.checkRange(address);
     return this.data[address] & 0xFF;
   }
 
   // Write single byte
   writeByte(address, value) {
-    if (address < 0 || address >= this.size) {
-      throw new Error(`Memory access out of bounds: ${address}`);
-    }
+    this.checkRange(address);
     this.data[address] = value & 0xFF;
   }
 
@@ -35,6 +37,7 @@ readWord(address) {
 
   // Write word (32 bits)
   writeWord(address, value) {
+    this.checkRange(address, 4);
     this.writeByte(address, value & 0xFF);
     this.writeByte(address + 1, (value >> 8) & 0xFF);
     this.writeByte(address + 2, (value >> 16) & 0xFF);
@@ -61,6 +64,7 @@ readWord(address) {
 
   // Write half word (16 bits)
   writeHalfWord(address, value) {
+    this.checkRange(address, 2);
     this.writeByte(address, value & 0xFF);
     this.writeByte(address + 1, (value >> 8) & 0xFF);
   }
@@ -77,7 +81,7 @@ readWord(address) {
 getMemorySnapshot() {
   const snapshot = [];
   
-  // Show all 1024 bytes
+  // Show every byte, including zero values
   for (let i = 0; i < this.size; i++) {
     const value = this.readByte(i);
     snapshot.push({ 

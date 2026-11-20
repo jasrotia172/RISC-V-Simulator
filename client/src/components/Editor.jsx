@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
 import './Editor.css';
 import { examplePrograms } from '../examples/programs';
 
-function Editor({ code, setCode }) {
-  const [selectedExample, setSelectedExample] = useState('');
+function Editor({ code, setCode, disabled }) {
+  const selectedExample = Object.keys(examplePrograms).find(name => examplePrograms[name] === code) || '';
 
   const handleExampleChange = (e) => {
     const exampleName = e.target.value;
-    setSelectedExample(exampleName);
     if (exampleName && examplePrograms[exampleName]) {
       setCode(examplePrograms[exampleName]);
     }
@@ -25,6 +23,8 @@ function Editor({ code, setCode }) {
             value={selectedExample} 
             onChange={handleExampleChange}
             className="example-selector"
+            aria-label="Load example program"
+            disabled={disabled}
           >
             <option value="">Load Example...</option>
             {Object.keys(examplePrograms).map(name => (
@@ -35,6 +35,8 @@ function Editor({ code, setCode }) {
       </div>
       <textarea
         className="code-editor"
+        aria-label="Assembly code"
+        disabled={disabled}
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="# Write RISC-V assembly code here

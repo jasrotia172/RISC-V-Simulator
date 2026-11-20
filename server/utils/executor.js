@@ -2,6 +2,8 @@ const { parseRegister, parseImmediate, parseMemoryOperand } = require('./parser'
 
 function executeInstruction(instruction, processor, memory) {
   const { opcode, operands } = instruction;
+  if (processor.halted) return;
+  let jumped = false;
 
   try {
     switch (opcode) {
@@ -107,30 +109,30 @@ function executeInstruction(instruction, processor, memory) {
 
       // Branch Instructions
       case 'BEQ':
-        executeBEQ(operands, processor);
+        jumped = executeBEQ(operands, processor);
         break;
       case 'BNE':
-        executeBNE(operands, processor);
+        jumped = executeBNE(operands, processor);
         break;
       case 'BLT':
-        executeBLT(operands, processor);
+        jumped = executeBLT(operands, processor);
         break;
       case 'BGE':
-        executeBGE(operands, processor);
+        jumped = executeBGE(operands, processor);
         break;
       case 'BLTU':
-        executeBLTU(operands, processor);
+        jumped = executeBLTU(operands, processor);
         break;
       case 'BGEU':
-        executeBGEU(operands, processor);
+        jumped = executeBGEU(operands, processor);
         break;
 
       // Jump Instructions
       case 'JAL':
-        executeJAL(operands, processor);
+        jumped = executeJAL(operands, processor);
         break;
       case 'JALR':
-        executeJALR(operands, processor);
+        jumped = executeJALR(operands, processor);
         break;
 
       // Halt
@@ -142,6 +144,7 @@ function executeInstruction(instruction, processor, memory) {
       default:
         throw new Error(`Unknown instruction: ${opcode}`);
     }
+    if (!processor.halted && !jumped) processor.pc++;
   } catch (error) {
     throw new Error(`Error executing ${opcode}: ${error.message}`);
   }
@@ -270,7 +273,7 @@ function executeSLTI(operands, processor) {
   const imm = parseImmediate(operands[2]);
   
   const val = processor.getRegister(rs1);
-  const result = val < imm ? 1 : 0;
+  const result = val < (imm | 0) ? 1 : 0;
   processor.setRegister(rd, result);
 }
 
@@ -429,9 +432,9 @@ function executeBEQ(operands, processor) {
   const targetAddress = parseImmediate(operands[2]); // Absolute instruction line number
   
   if (processor.getRegister(rs1) === processor.getRegister(rs2)) {
-    processor.pc = targetAddress; // Set PC directly to target
+    return jumpTo(processor, targetAddress);
   }
-  // If false, PC will be auto-incremented by main loop
+  // Untaken branches advance in executeInstruction.
 }
 
 function executeBNE(operands, processor) {
@@ -440,7 +443,7 @@ function executeBNE(operands, processor) {
   const targetAddress = parseImmediate(operands[2]);
   
   if (processor.getRegister(rs1) !== processor.getRegister(rs2)) {
-    processor.pc = targetAddress;
+    return jumpTo(processor, targetAddress);
   }
 }
 
@@ -454,7 +457,7 @@ function executeBLT(operands, processor) {
   const val2 = processor.getRegister(rs2) | 0;
   
   if (val1 < val2) {
-    processor.pc = targetAddress;
+    return jumpTo(processor, targetAddress);
   }
 }
 
@@ -468,7 +471,7 @@ function executeBGE(operands, processor) {
   const val2 = processor.getRegister(rs2) | 0;
   
   if (val1 >= val2) {
-    processor.pc = targetAddress;
+    return jumpTo(processor, targetAddress);
   }
 }
 
@@ -482,7 +485,7 @@ function executeBLTU(operands, processor) {
   const val2 = processor.getRegister(rs2) >>> 0;
   
   if (val1 < val2) {
-    processor.pc = targetAddress;
+    return jumpTo(processor, targetAddress);
   }
 }
 
@@ -496,7 +499,7 @@ function executeBGEU(operands, processor) {
   const val2 = processor.getRegister(rs2) >>> 0;
   
   if (val1 >= val2) {
-    processor.pc = targetAddress;
+    return jumpTo(processor, targetAddress);
   }
 }
 
@@ -505,12 +508,12 @@ function executeBGEU(operands, processor) {
 // Jump Instructions
 function executeJAL(operands, processor) {
   const rd = parseRegister(operands[0]);
-  const offset = parseImmediate(operands[1]); // Absolute instruction line
+  const offset = parseImmediate(operands[1]); // Relative instruction offset
   
-  // Save return address (next instruction)
-  processor.setRegister(rd, processor.pc + 1);
-  // Jump to target address
-  processor.pc += offset;
+  const returnAddr = processor.pc + 1;
+  jumpTo(processor, processor.pc + offset);
+  processor.setRegister(rd, returnAddr);
+  return true;
 }
 
 
@@ -523,10 +526,19 @@ function executeJALR(operands, processor) {
   // Save return address
   const returnAddr = processor.pc + 1;
   // Jump to (rs1 + offset)
-  processor.pc = processor.getRegister(rs1) + offset;
+  jumpTo(processor, processor.getRegister(rs1) + offset);
   processor.setRegister(rd, returnAddr);
+  return true;
 }
 
+
+function jumpTo(processor, target) {
+  if (!Number.isSafeInteger(target) || target < 0) {
+    throw new Error(`Invalid jump target: ${target}`);
+  }
+  processor.pc = target;
+  return true;
+}
 
 module.exports = {
   executeInstruction

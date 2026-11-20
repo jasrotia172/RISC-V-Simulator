@@ -1,216 +1,136 @@
+# RISC-V 32-bit Simulator
 
-# 🖥️ RISC-V 32-bit Simulator
+A React and Express teaching simulator for writing assembly, executing programs, and inspecting 32 registers and 256 bytes of memory.
 
-An interactive web-based RISC-V assembly language simulator that supports real-time execution, step-by-step debugging, and visual feedback for register and memory states.
+## Setup
 
-## 📋 Features
+Use Node.js 22.12 or newer and npm. Install dependencies in both directories:
 
-- **Interactive Code Editor**: Write and edit RISC-V assembly code with syntax highlighting
-- **Real-time Execution**: Execute all instructions at once or step through them one-by-one
-- **Visual Feedback**: Registers and memory locations highlight in green when modified
-- **Comprehensive Instruction Support**: Implements R, I, S, U, B, and J format instructions
-- **Memory Display**: View all 256 bytes of memory with address-value pairs in a multi-column layout
-- **Program Counter Tracking**: Monitor PC changes during execution
-- **Error Handling**: Clear error messages for invalid instructions or syntax errors
-
-## 🚀 Supported Instructions
-
-### R-Format (Register-Register)
-`ADD`, `SUB`, `SLL`, `SLT`, `SLTU`, `XOR`, `SRL`, `SRA`, `OR`, `AND`
-
-### I-Format (Immediate)
-`ADDI`, `SLLI`, `SLTI`, `SLTIU`, `XORI`, `SRLI`, `SRAI`, `ORI`, `ANDI`
-
-### Load Instructions
-`LB`, `LH`, `LW`, `LBU`, `LHU`
-
-### Store Instructions
-`SB`, `SH`, `SW`
-
-### U-Format (Upper Immediate)
-`LUI`, `AUIPC`
-
-### Branch Instructions
-`BEQ`, `BNE`, `BLT`, `BGE`, `BLTU`, `BGEU`
-
-### Jump Instructions
-`JAL`, `JALR`
-
-### Control
-`HLT` (Halt execution)
-
-## 🛠️ Tech Stack
-
-### Frontend
-- React.js
-- CSS3 with custom styling
-- Axios for API calls
-
-### Backend
-- Node.js
-- Express.js
-- CORS enabled
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js (v14 or higher)
-- npm
-
-### Setup
-
-1. **Clone the repository**
-```
-git clone https://github.com/jasrotia172/RISC-V-Simulator.git
-cd RISC-V-Simulator
+```sh
+npm ci --prefix server
+npm ci --prefix client
 ```
 
-2. **Install Backend Dependencies**
-```
-cd server
-npm install
+Start the backend and frontend in separate terminals:
+
+```sh
+npm start --prefix server
 ```
 
-3. **Install Frontend Dependencies**
-```
-cd ../client
-npm install
+```sh
+npm run dev --prefix client
 ```
 
-## ▶️ Running the Application
+Open **http://localhost:5173**. The frontend proxies `/api` to the backend at **http://localhost:3000**. If that frontend port is occupied, use the URL printed by Vite. The backend accepts a `PORT` environment variable; if you change it, update the proxy targets in `client/vite.config.js` too.
 
-### Start Backend Server
-```
-cd server
-npm start
-```
-Server will run on `http://localhost:3000`
+To check a production build locally, keep the backend running and run:
 
-### Start Frontend
-```
-cd client
-npm start
-```
-Frontend will run on `http://localhost:3001` (or next available port)
-
-## 🎯 Usage
-
-### Writing Code
-Enter RISC-V assembly instructions in the editor. Example:
-```
-# Simple addition program
-ADDI x1, x0, 5
-ADDI x2, x0, 10
-ADD x3, x1, x2
-HLT
+```sh
+npm run build --prefix client
+npm run preview --prefix client
 ```
 
-### Labels and Jumps
-```
-# Jump example
-JAL x1, target
-ADDI x2, x0, 999
-target:
-ADDI x2, x0, 1
-HLT
+For deployment, serve `client/dist` and forward `/api` to the Express server. This application currently has **one shared simulator per backend process**: browser tabs and users share registers, memory, and the loaded program. It is intended for local, single-user learning.
 
+## Using the simulator
 
-### Branch Instructions
+- **Execute** validates the entire source, starts with cleared registers and memory, and runs until `HLT`, the end of the program, or the 10,000-instruction limit.
+- **Step** starts a fresh program after source edits or Reset. Later clicks execute one instruction each. After Execute, it uses the same loaded program and state.
+- **Reset** clears machine state and unloads the program while preserving the editor text.
+- Editing the source or selecting an example makes the next Step load that source. The last machine state remains visible until an action runs.
+- Controls and the editor are disabled while a request is pending. Step is disabled when the current program finishes; Execute restarts it.
+- Green cells indicate **nonzero values**, not changes since the previous step.
+- Syntax errors include source line numbers and leave the previous machine state intact. Runtime errors show the state reached before the failing instruction. A failing out-of-bounds store does not partially write memory.
 
-# Conditional branch
-ADDI x1, x0, 5
+The editor is a plain-text assembly editor with an example selector; it does not provide syntax highlighting.
+
+## Supported instructions
+
+| Group | Instructions |
+| --- | --- |
+| Register arithmetic / logic | `ADD SUB SLL SLT SLTU XOR SRL SRA OR AND` |
+| Immediate arithmetic / logic | `ADDI SLLI SLTI SLTIU XORI SRLI SRAI ORI ANDI` |
+| Loads | `LB LH LW LBU LHU` |
+| Stores | `SB SH SW` |
+| Upper immediate | `LUI AUIPC` |
+| Branches | `BEQ BNE BLT BGE BLTU BGEU` |
+| Jumps | `JAL JALR` |
+| Simulator control | `HLT` |
+
+Compatibility aliases: `HALT`, `LHW`, `LHWU`, and `SHW`.
+
+Opcodes and `x` register prefixes are case-insensitive. Registers are `x0`–`x31` (bare numbers `0`–`31` also work); `x0` always reads zero. ABI aliases such as `ra` and `sp` are not supported. Instructions must provide the exact number of operands. Decimal, hexadecimal (`0x`), and binary (`0b`) immediates accept optional `+` or `-` signs. Memory operands use `offset(base)`, such as `4(x2)` or `0x10(x0)`; a bare address uses `x0` as its base.
+
+Use `#` or `//` for comments. Labels are case-sensitive, may share a line with an instruction, and must be unique. They begin with a letter, `_`, `.`, or `$`, followed by letters, digits, `_`, `.`, or `$`.
+
+```asm
+ADDI x1, x0, 0
 ADDI x2, x0, 5
-BEQ x1, x2, skip
-ADDI x3, x0, 999
-skip:
-ADDI x10, x0, 1
+loop: ADDI x1, x1, 1
+BLT x1, x2, loop
+SW x1, 0(x0)
 HLT
-
-
-### Control Panel
-- **Execute**: Run all instructions until HLT or end of program
-- **Step**: Execute one instruction at a time
-- **Reset**: Clear all registers, memory, and reset PC to 0
-
-## 📊 Visual Feedback
-
-- **Green highlighting**: Indicates registers or memory locations that have been modified
-- **Program Counter (PC)**: Displays current instruction being executed
-- **Memory Display**: Shows all 256 bytes in a 4-column layout with address-value pairs
-
-## 🏗️ Project Structure
-
-RISC-V SIMULATOR/
-├── client/                 # React frontend
-│   ├── public/
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   │   ├── Editor.jsx
-│   │   │   ├── RegisterDisplay.jsx
-│   │   │   ├── MemoryDisplay.jsx
-│   │   │   └── ControlPanel.jsx
-│   │   ├── services/      # API service
-│   │   └── App.jsx
-│   └── package.json
-│
-├── server/                # Node.js backend
-│   ├── utils/
-│   │   ├── Processor.js   # CPU simulation
-│   │   ├── Memory.js      # Memory management
-│   │   ├── parser.js      # Instruction parser
-│   │   └── executor.js    # Instruction execution
-│   ├── server.js          # Express server
-│   └── package.json
-│
-└── README.md
 ```
 
-## 🔧 API Endpoints
+## Execution conventions and limits
 
-- `GET /api/health` - Server health check
-- `POST /api/execute` - Execute all instructions
-- `POST /api/step` - Execute one instruction
-- `POST /api/reset` - Reset simulator state
-- `GET /api/state` - Get current simulator state
+This project models a subset of RISC-V operations with an **instruction-index PC**. It is not a binary-compatible RV32I emulator. Its conventions preserve the project's existing assembly model:
 
-## 🎓 Educational Use
+- PC begins at `0` and advances by `1` per instruction. Blank lines, labels, and comments do not consume a PC position.
+- Branch labels resolve to absolute instruction indices. A numeric branch operand is also an absolute index: `BEQ x0, x0, 3` jumps to the fourth instruction.
+- `JAL rd, label` jumps to that label. A numeric operand is a relative instruction offset: `JAL x1, 2` skips one instruction. The link register receives `PC + 1`.
+- `JALR rd, rs1, offset` jumps to `rs1 + offset` in instruction indices and saves `PC + 1`. It does not clear the target's low bit. The source is read before the link register is written, including when `rd` equals `rs1`.
+- `AUIPC` adds the current instruction index to the immediate shifted left by 12. `LUI` only shifts the immediate.
+- Negative jump targets fail. Reaching or jumping beyond the final instruction completes execution. A jump to itself stays on that instruction; Execute eventually reports its loop limit.
+- Registers contain signed 32-bit values; arithmetic wraps to 32 bits. Unsigned comparisons reinterpret the same bits as unsigned. Shift amounts use their low five bits.
+- Immediates accept signed or unsigned 32-bit values (`-2147483648` through `4294967295`). Instruction encoding limits such as 12-bit immediates are not enforced.
+- Data memory contains 256 bytes at addresses `0`–`255`, uses little-endian ordering, and permits unaligned accesses when the entire access fits. Instruction storage is separate from data memory.
+- `HLT` is a simulator command. No machine-code decoding, assembler directives, system calls, pipeline, cache, or additional ISA extensions are implemented.
 
-This simulator is designed for students learning computer architecture and RISC-V assembly language. It provides:
-- Visual understanding of instruction execution
-- Step-by-step debugging capabilities
-- Real-time register and memory updates
-- Support for labels and control flow
+For comparison, hardware RISC-V uses byte addresses, `PC + 4` for these instruction links, and instruction-specific immediate encodings. See the [official RV32I specification](https://docs.riscv.org/reference/isa/unpriv/rv32.html).
 
-## 🐛 Known Limitations
+## API
 
-- Memory size: 256 bytes (addresses 0-255)
-- 32 general-purpose registers (x0-x31)
-- Single-threaded execution
-- No pipeline simulation
-- No cache simulation
+| Method | Endpoint | Behavior |
+| --- | --- | --- |
+| GET | `/api/health` | Health check |
+| GET | `/api/state` | Current machine state |
+| POST | `/api/execute` | Validate and run a fresh program: `{ "code": "..." }` |
+| POST | `/api/step` | Load and step with `{ "code": "..." }`, or continue with `{}` |
+| POST | `/api/reset` | Reset and unload the program |
 
-## 🤝 Contributing
+Successful machine responses include `success`, `registers`, `memory`, `pc`, `halted`, `completed`, and `executionCount`. `halted` means an explicit halt; `completed` also includes reaching the end of source. Memory is an array of `{ address, value, hex }` byte entries. Invalid programs and runtime errors return HTTP 400 with `error`, `state`, and `programLoaded`. Malformed JSON and oversized request bodies return JSON errors with HTTP 400 and 413 respectively.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Verification
 
-## 📝 License
+```sh
+npm test --prefix server
+npm run lint --prefix client
+npm run build --prefix client
+```
 
-This project is open source and available under the MIT License.
+The Node test suite covers parsing, instruction behavior, control flow, memory bounds, execution limits, API requests, and agreement between Execute and Step for every bundled example. API tests start a temporary localhost listener.
 
-## 👨‍💻 Author
+## Structure
 
-**Ansh Jasrotia**
-**Anant Gautam**
+```text
+client/
+  src/components/      Editor, controls, registers, and memory
+  src/examples/        Bundled assembly programs
+  src/services/api.js  API client
+  src/App.jsx          UI state and actions
+server/
+  server.js            Express app and API routes
+  utils/Simulator.js   Shared loading, stepping, and execution lifecycle
+  utils/Processor.js   Registers and PC
+  utils/Memory.js      Byte-addressed memory
+  utils/parser.js      Source validation and label resolution
+  utils/executor.js    Instruction operations and PC advancement
+  test/                Regression and API tests
+```
 
-## 🙏 Acknowledgments
+Generated dependencies and build outputs are ignored by the root `.gitignore`. The original repository already tracks files under `server/node_modules`; ignoring the directory does not untrack those existing files.
 
-- RISC-V Foundation for the ISA specification
-- React and Node.js communities
+## Authors
 
-## 📧 Contact
-
-For questions or support, please open an issue on GitHub.
-
----
-
-**Made with ❤️ for Computer Architecture Education**
+Ansh Jasrotia and Anant Gautam.

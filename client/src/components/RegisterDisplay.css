@@ -101,3 +101,10 @@
   color: #4ec9b0;
   font-weight: bold;
 }
+
+@media (max-width: 1024px) {
+  .register-display { max-height: 400px; }
+}
+@media (max-width: 600px) {
+  .register-grid { grid-template-columns: 1fr; }
+}
